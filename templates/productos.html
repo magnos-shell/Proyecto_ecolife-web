@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2 class="mb-4 text-center">Nuestros Productos Ecológicos</h2>
+<div class="row">
+    {% for item in productos %}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">{{ item.nombre }}</h5>
+                <p class="card-text">{{ item.descripcion }}</p>
+                <h6 class="text-success">${{ item.precio }}</h6>
+            </div>
+            <div class="card-footer bg-transparent border-top-0">
+                <a href="#" class="btn btn-outline-success w-100">Ver Detalles</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
