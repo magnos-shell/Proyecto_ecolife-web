@@ -1,0 +1,18 @@
+/* Estilos personalizados para EcoLife */
+body {
+    background-color: #fcfcfc;
+}
+
+.main-content {
+    min-height: 60vh; /* Asegura que el footer se mantenga abajo */
+}
+
+.custom-footer {
+    border-top: 2px solid #198754; /* Una línea verde sutil de Bootstrap */
+}
+
+.card:hover {
+    transform: scale(1.02);
+    transition: 0.3s ease-in-out;
+    box-shadow: 0 4px 15px rgba(25, 135, 84, 0.2) !important;
+}
