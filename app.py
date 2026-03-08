@@ -6,14 +6,16 @@ from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 
-# --- CONFIGURACIÓN DE RUTAS Y BASE DE DATOS (2.3) ---
-# Usamos ruta absoluta para evitar errores de "unable to open database file" en Windows
+# --- CONFIGURACIÓN DE RUTAS Y BASE DE DATOS ---
+# Basdir ayuda a localizar carpetas sin importar si es Windows o el servidor de Render
 basedir = os.path.abspath(os.path.dirname(__file__))
+
+# Configuración de SQLite (Base de Datos)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'instance', 'ecolife.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# --- MODELO DE DATOS (2.4) ---
+# --- MODELO DE DATOS ---
 class Producto(db.Model):
     __tablename__ = 'productos'
     id = db.Column(db.Integer, primary_key=True)
@@ -21,11 +23,12 @@ class Producto(db.Model):
     cantidad = db.Column(db.Integer, nullable=False)
     precio = db.Column(db.Float, nullable=False)
 
-# --- INICIALIZACIÓN DE CARPETAS Y TABLAS ---
+# --- INICIALIZACIÓN ---
 with app.app_context():
-    # Asegura que la carpeta 'instance' exista para la base de datos
-    if not os.path.exists(os.path.join(basedir, 'instance')):
-        os.makedirs(os.path.join(basedir, 'instance'))
+    # Creamos la carpeta instance si no existe
+    instance_path = os.path.join(basedir, 'instance')
+    if not os.path.exists(instance_path):
+        os.makedirs(instance_path)
     db.create_all()
 
 # --- RUTAS DE NAVEGACIÓN ---
@@ -42,13 +45,12 @@ def about():
 def contacto():
     if request.method == 'POST':
         nombre = request.form.get('nombre')
-        # Aquí puedes procesar el mensaje del formulario de contacto
-        return f"<h1>¡Gracias {nombre}!</h1><p>Hemos recibido tu mensaje.</p><a href='/'>Volver al inicio</a>"
+        return f"<h1>¡Gracias {nombre}!</h1><p>Mensaje recibido.</p><a href='/'>Volver</a>"
     return render_template('contacto.html')
 
 @app.route('/inventario')
 def inventario():
-    # Leer datos de SQLite para mostrarlos en la tabla (2.3)
+    # 2.3 Leer datos de SQLite
     productos_db = Producto.query.all()
     return render_template('inventario.html', productos=productos_db)
 
@@ -60,48 +62,38 @@ def agregar_producto():
     cantidad = int(request.form['cantidad'])
     precio = float(request.form['precio'])
     
-    # 1. Guardar en SQLite (SQLAlchemy)
+    # A. Guardar en SQLite
     nuevo_prod = Producto(nombre=nombre, cantidad=cantidad, precio=precio)
     db.session.add(nuevo_prod)
     db.session.commit()
 
-    # Preparar datos para archivos físicos
-    datos_dict = {
-        "id": nuevo_prod.id,
-        "nombre": nombre,
-        "cantidad": cantidad,
-        "precio": precio
-    }
+    datos_dict = {"id": nuevo_prod.id, "nombre": nombre, "cantidad": cantidad, "precio": precio}
 
-    # 2. Persistencia en TXT (usando open() en modo append 'a')
+    # B. Persistencia en TXT
     with open('productos.txt', 'a', encoding='utf-8') as f:
         f.write(f"{nuevo_prod.id}|{nombre}|{cantidad}|{precio}\n")
 
-    # 3. Persistencia en JSON (librería json)
+    # C. Persistencia en JSON
     productos_lista = []
     if os.path.exists('productos.json'):
         with open('productos.json', 'r', encoding='utf-8') as f:
-            try:
-                productos_lista = json.load(f)
-            except json.JSONDecodeError:
-                productos_lista = []
+            try: productos_lista = json.load(f)
+            except: productos_lista = []
     
     productos_lista.append(datos_dict)
     with open('productos.json', 'w', encoding='utf-8') as f:
         json.dump(productos_lista, f, indent=4)
 
-    # 4. Persistencia en CSV (librería csv)
-    archivo_existe = os.path.isfile('productos.csv')
+    # D. Persistencia en CSV
+    file_exists = os.path.isfile('productos.csv')
     with open('productos.csv', 'a', newline='', encoding='utf-8') as f:
-        campos = ["id", "nombre", "cantidad", "precio"]
-        writer = csv.DictWriter(f, fieldnames=campos)
-        if not archivo_existe:
-            writer.writeheader()
+        writer = csv.DictWriter(f, fieldnames=["id", "nombre", "cantidad", "precio"])
+        if not file_exists: writer.writeheader()
         writer.writerow(datos_dict)
 
     return redirect(url_for('inventario'))
 
-# --- LECTURA DE ARCHIVOS (2.2) ---
+# --- RUTA PARA VISUALIZAR ARCHIVOS ---
 
 @app.route('/leer/<formato>')
 def leer_archivo(formato):
@@ -111,20 +103,17 @@ def leer_archivo(formato):
     if formato == 'txt' and os.path.exists('productos.txt'):
         with open('productos.txt', 'r', encoding='utf-8') as f:
             datos = f.readlines()
-            
     elif formato == 'json' and os.path.exists('productos.json'):
         with open('productos.json', 'r', encoding='utf-8') as f:
-            try:
-                datos = json.load(f)
-            except:
-                datos = []
-                
+            datos = json.load(f)
     elif formato == 'csv' and os.path.exists('productos.csv'):
         with open('productos.csv', 'r', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            datos = list(reader)
+            datos = list(csv.DictReader(f))
             
     return render_template('mostrar_archivos.html', formato=formato.upper(), datos=datos)
 
+# --- INICIO DEL SERVIDOR (AJUSTADO PARA RENDER) ---
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Render usa la variable de entorno PORT. Si no existe, usa el 5000.
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
