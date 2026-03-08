@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <h1>Visualización de Datos: Formato {{ formato }}</h1>
+    <div class="alert alert-info">
+        Esta información se está leyendo directamente desde el archivo físico del servidor.
+    </div>
+    
+    <ul class="list-group">
+        {% for item in datos %}
+            <li class="list-group-item">{{ item }}</li>
+        {% endfor %}
+    </ul>
+    
+    <br>
+    <a href="/inventario" class="btn btn-primary">Volver al Inventario</a>
+</div>
+{% endblock %}
