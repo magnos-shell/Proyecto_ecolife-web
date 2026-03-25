@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h3 class="mb-0 text-center">{{ accion }} Producto</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }} 
+                        
+                        <div class="mb-3">
+                            {{ form.nombre.label(class="form-label fw-bold") }}
+                            {{ form.nombre(class="form-control", placeholder="Ej: Jabón Biodegradable") }}
+                            {% for error in form.nombre.errors %}
+                                <span class="text-danger small">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.cantidad.label(class="form-label fw-bold") }}
+                                {{ form.cantidad(class="form-control") }}
+                                {% for error in form.cantidad.errors %}
+                                    <span class="text-danger small">{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                {{ form.precio.label(class="form-label fw-bold") }}
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    {{ form.precio(class="form-control") }}
+                                </div>
+                                {% for error in form.precio.errors %}
+                                    <span class="text-danger small">{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            {{ form.submit(class="btn btn-success btn-lg") }}
+                            <a href="{{ url_for('inventario') }}" class="btn btn-outline-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

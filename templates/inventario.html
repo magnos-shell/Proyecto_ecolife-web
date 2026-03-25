@@ -1,60 +1,46 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container mt-4">
-    <h1 class="text-center mb-4">Gestión de Inventario EcoLife (MySQL)</h1>
-    
-    <div class="card p-4 shadow-sm mb-5">
-        <h3 class="card-title">Registrar Nuevo Producto</h3>
-        <hr>
-        <form action="/agregar_producto" method="POST">
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Nombre del Producto</label>
-                    <input type="text" name="nombre" class="form-control" placeholder="Ej. Detergente Bio" required>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Cantidad</label>
-                    <input type="number" name="cantidad" class="form-control" placeholder="0" required>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Precio</label>
-                    <input type="number" step="0.01" name="precio" class="form-control" placeholder="0.00" required>
-                </div>
-            </div>
-            <button type="submit" class="btn btn-primary w-100">Guardar en Base de Datos MySQL</button>
-        </form>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📦 Inventario de EcoLife</h2>
+        
+        <div>
+            <a href="{{ url_for('generar_pdf') }}" class="btn btn-danger me-2">📄 Descargar PDF</a>
+            <a href="{{ url_for('nuevo_producto') }}" class="btn btn-success">+ Añadir Producto</a>
+        </div>
+        
     </div>
 
-    <h3 class="mb-3">Productos Almacenados</h3>
-    <div class="table-responsive">
-        <table class="table table-hover table-bordered shadow-sm">
-            <thead class="table-dark text-center">
+    <div class="table-responsive shadow-sm rounded">
+        <table class="table table-hover table-bordered text-center align-middle">
+            <thead class="table-success">
                 <tr>
                     <th>ID</th>
                     <th>Nombre</th>
-                    <th>Stock</th>
-                    <th>Precio</th>
+                    <th>Cantidad</th>
+                    <th>Precio ($)</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
-            <tbody class="text-center">
-                {% for prod in productos %}
+            <tbody>
+                {% for producto in productos %}
                 <tr>
-                    <td>{{ prod.id }}</td>
-                    <td class="text-start">{{ prod.nombre }}</td>
-                    <td>{{ prod.cantidad }}</td>
-                    <td>${{ prod.precio }}</td>
+                    <td>{{ producto.id }}</td>
+                    <td class="text-start">{{ producto.nombre }}</td>
                     <td>
-                        <a href="{{ url_for('eliminar_producto', id=prod.id) }}" 
-                           class="btn btn-danger btn-sm" 
-                           onclick="return confirm('¿Estás seguro de eliminar este producto?')">
-                           Eliminar
-                        </a>
+                        <span class="badge {% if producto.cantidad > 10 %}bg-primary{% elif producto.cantidad > 0 %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                            {{ producto.cantidad }}
+                        </span>
+                    </td>
+                    <td>${{ "%.2f"|format(producto.precio) }}</td>
+                    <td>
+                        <a href="{{ url_for('editar_producto', id=producto.id) }}" class="btn btn-sm btn-outline-primary me-2">✏️ Editar</a>
+                        <a href="{{ url_for('eliminar_producto', id=producto.id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar este producto? Esta acción no se puede deshacer.');">🗑️ Eliminar</a>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="5" class="text-center text-muted">No hay productos registrados en MySQL.</td>
+                    <td colspan="5" class="text-muted py-4">No hay productos en el inventario. ¡Agrega el primero!</td>
                 </tr>
                 {% endfor %}
             </tbody>
