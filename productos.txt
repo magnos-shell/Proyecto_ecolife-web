@@ -1,2 +1,3 @@
 Detergente liquido ,56,2.86
 2|Cepillo de bambu|89|85.0
+1|shampoo de bambu|4|1.3

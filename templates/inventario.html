@@ -1,44 +1,64 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container">
-    <h1>Gestión de Inventario EcoLife</h1>
+<div class="container mt-4">
+    <h1 class="text-center mb-4">Gestión de Inventario EcoLife (MySQL)</h1>
     
-    <div class="card p-4 mb-4">
-        <h3>Registrar Nuevo Producto</h3>
+    <div class="card p-4 shadow-sm mb-5">
+        <h3 class="card-title">Registrar Nuevo Producto</h3>
+        <hr>
         <form action="/agregar_producto" method="POST">
-            <div class="mb-3">
-                <input type="text" name="nombre" class="form-control" placeholder="Nombre del Producto" required>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Nombre del Producto</label>
+                    <input type="text" name="nombre" class="form-control" placeholder="Ej. Detergente Bio" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Cantidad</label>
+                    <input type="number" name="cantidad" class="form-control" placeholder="0" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Precio</label>
+                    <input type="number" step="0.01" name="precio" class="form-control" placeholder="0.00" required>
+                </div>
             </div>
-            <div class="mb-3">
-                <input type="number" name="cantidad" class="form-control" placeholder="Cantidad en Stock" required>
-            </div>
-            <div class="mb-3">
-                <input type="number" step="0.01" name="precio" class="form-control" placeholder="Precio Unitario" required>
-            </div>
-            <button type="submit" class="btn btn-success">Guardar en Todo el Sistema</button>
+            <button type="submit" class="btn btn-primary w-100">Guardar en Base de Datos MySQL</button>
         </form>
     </div>
 
-    <h3>Productos en SQLite (SQLAlchemy)</h3>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nombre</th>
-                <th>Stock</th>
-                <th>Precio</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for prod in productos %}
-            <tr>
-                <td>{{ prod.id }}</td>
-                <td>{{ prod.nombre }}</td>
-                <td>{{ prod.cantidad }}</td>
-                <td>${{ prod.precio }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <h3 class="mb-3">Productos Almacenados</h3>
+    <div class="table-responsive">
+        <table class="table table-hover table-bordered shadow-sm">
+            <thead class="table-dark text-center">
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Stock</th>
+                    <th>Precio</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="text-center">
+                {% for prod in productos %}
+                <tr>
+                    <td>{{ prod.id }}</td>
+                    <td class="text-start">{{ prod.nombre }}</td>
+                    <td>{{ prod.cantidad }}</td>
+                    <td>${{ prod.precio }}</td>
+                    <td>
+                        <a href="{{ url_for('eliminar_producto', id=prod.id) }}" 
+                           class="btn btn-danger btn-sm" 
+                           onclick="return confirm('¿Estás seguro de eliminar este producto?')">
+                           Eliminar
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted">No hay productos registrados en MySQL.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

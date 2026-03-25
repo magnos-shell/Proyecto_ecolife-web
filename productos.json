@@ -4,5 +4,11 @@
         "nombre": "Cepillo de bambu",
         "cantidad": 89,
         "precio": 85.0
+    },
+    {
+        "id": 1,
+        "nombre": "shampoo de bambu",
+        "cantidad": 4,
+        "precio": 1.3
     }
 ]
