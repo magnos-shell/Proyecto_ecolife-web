@@ -1,13 +1,24 @@
 import os
 import json
-import csv
-from flask import Flask, render_template, request, redirect, url_for
-# Importamos tu nueva carpeta de conexión
+from flask import Flask, render_template, request, redirect, url_for, flash
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
 from Conexion.conexion import obtener_conexion
+from models import Usuario  # Asegúrate de haber creado models.py
 
 app = Flask(__name__)
+app.secret_key = 'clave_secreta_ecolife' # Necesario para las sesiones
 
-# --- RUTAS DE NAVEGACIÓN ---
+# --- CONFIGURACIÓN DE FLASK-LOGIN ---
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login' # A donde redirigir si no hay sesión
+
+@login_manager.user_loader
+def load_user(user_id):
+    return Usuario.get_by_id(user_id)
+
+# --- RUTAS DE NAVEGACIÓN PÚBLICAS ---
 
 @app.route('/')
 def home():
@@ -24,59 +35,83 @@ def contacto():
         return f"<h1>¡Gracias {nombre}!</h1><p>Mensaje recibido.</p><a href='/'>Volver</a>"
     return render_template('contacto.html')
 
-# --- CONSULTA A MYSQL (Punto 4 de la tarea) ---
+# --- RUTAS DE AUTENTICACIÓN ---
+
+@app.route('/registro', methods=['GET', 'POST'])
+def registro():
+    if request.method == 'POST':
+        nombre = request.form['nombre']
+        email = request.form['email']
+        password = request.form['password']
+        pw_hash = generate_password_hash(password) # Encriptar contraseña
+        
+        conexion = obtener_conexion()
+        if conexion:
+            cursor = conexion.cursor()
+            try:
+                cursor.execute("INSERT INTO usuarios (nombre, email, password) VALUES (%s, %s, %s)", 
+                               (nombre, email, pw_hash))
+                conexion.commit()
+                flash('Registro exitoso. ¡Inicia sesión!')
+                return redirect(url_for('login'))
+            except:
+                flash('El correo ya está registrado.')
+            finally:
+                conexion.close()
+    return render_template('registro.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+        user = Usuario.get_by_email(email)
+        
+        if user and check_password_hash(user.password, password):
+            login_user(user)
+            return redirect(url_for('inventario'))
+        else:
+            flash('Email o contraseña incorrectos.')
+    return render_template('login.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('home'))
+
+# --- RUTAS PROTEGIDAS (Requieren Login) ---
+
 @app.route('/inventario')
+@login_required # <--- Solo usuarios registrados pueden entrar
 def inventario():
     conexion = obtener_conexion()
     productos_db = []
-    
     if conexion:
-        cursor = conexion.cursor(dictionary=True) # Trae datos como diccionarios
+        cursor = conexion.cursor(dictionary=True)
         cursor.execute("SELECT * FROM productos")
         productos_db = cursor.fetchall()
         conexion.close()
-        
     return render_template('inventario.html', productos=productos_db)
 
-# --- OPERACIONES CRUD (Insertar, Eliminar, Modificar) ---
-
 @app.route('/agregar_producto', methods=['POST'])
+@login_required
 def agregar_producto():
     nombre = request.form['nombre']
     cantidad = int(request.form['cantidad'])
     precio = float(request.form['precio'])
     
-    # 1. GUARDAR EN MYSQL
     conexion = obtener_conexion()
     if conexion:
         cursor = conexion.cursor()
         sql = "INSERT INTO productos (nombre, cantidad, precio) VALUES (%s, %s, %s)"
         cursor.execute(sql, (nombre, cantidad, precio))
         conexion.commit()
-        nuevo_id = cursor.lastrowid # Obtenemos el ID generado
         conexion.close()
-
-        # 2. MANTENER PERSISTENCIA EN ARCHIVOS (Opcional, pero recomendado)
-        datos_dict = {"id": nuevo_id, "nombre": nombre, "cantidad": cantidad, "precio": precio}
-
-        # Guardar en TXT
-        with open('productos.txt', 'a', encoding='utf-8') as f:
-            f.write(f"{nuevo_id}|{nombre}|{cantidad}|{precio}\n")
-
-        # Guardar en JSON
-        productos_lista = []
-        if os.path.exists('productos.json'):
-            with open('productos.json', 'r', encoding='utf-8') as f:
-                try: productos_lista = json.load(f)
-                except: productos_lista = []
-        productos_lista.append(datos_dict)
-        with open('productos.json', 'w', encoding='utf-8') as f:
-            json.dump(productos_lista, f, indent=4)
-
     return redirect(url_for('inventario'))
 
-# --- RUTA PARA ELIMINAR (Punto 4) ---
 @app.route('/eliminar_producto/<int:id>')
+@login_required
 def eliminar_producto(id):
     conexion = obtener_conexion()
     if conexion:
@@ -85,19 +120,6 @@ def eliminar_producto(id):
         conexion.commit()
         conexion.close()
     return redirect(url_for('inventario'))
-
-# --- RUTA PARA LEER ARCHIVOS (Se mantiene igual) ---
-@app.route('/leer/<formato>')
-def leer_archivo(formato):
-    datos = []
-    formato = formato.lower()
-    if formato == 'txt' and os.path.exists('productos.txt'):
-        with open('productos.txt', 'r', encoding='utf-8') as f:
-            datos = f.readlines()
-    elif formato == 'json' and os.path.exists('productos.json'):
-        with open('productos.json', 'r', encoding='utf-8') as f:
-            datos = json.load(f)
-    return render_template('mostrar_archivos.html', formato=formato.upper(), datos=datos)
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))

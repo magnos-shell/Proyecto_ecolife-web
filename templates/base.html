@@ -9,19 +9,20 @@
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success shadow">
         <div class="container">
             <a class="navbar-brand" href="/">🌱 EcoLife</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav me-auto">
                     <li class="nav-item"><a class="nav-link" href="/">Inicio</a></li>
                     <li class="nav-item"><a class="nav-link" href="/about">Acerca de</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/contacto">Contacto</a></li>
                     
+                    {% if current_user.is_authenticated %}
                     <li class="nav-item"><a class="nav-link" href="/inventario">Inventario</a></li>
-                    
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             Ver Archivos
@@ -29,15 +30,44 @@
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                             <li><a class="dropdown-item" href="/leer/txt">Ver TXT</a></li>
                             <li><a class="dropdown-item" href="/leer/json">Ver JSON</a></li>
-                            <li><a class="dropdown-item" href="/leer/csv">Ver CSV</a></li>
                         </ul>
                     </li>
+                    {% endif %}
+                </ul>
 
-                    <li class="nav-item"><a class="nav-link" href="/contacto">Contacto</a></li>
+                <ul class="navbar-nav ms-auto">
+                    {% if current_user.is_authenticated %}
+                        <li class="nav-item">
+                            <span class="nav-link text-white fw-bold">👤 Hola, {{ current_user.nombre }}</span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-outline-light ms-lg-3" href="{{ url_for('logout') }}">Cerrar Sesión</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('login') }}">Iniciar Sesión</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-light text-success fw-bold ms-lg-2" href="{{ url_for('registro') }}">Registrarse</a>
+                        </li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
     </nav>
+
+    <div class="container mt-3">
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            {% for message in messages %}
+              <div class="alert alert-info alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+    </div>
 
     <div class="container mt-4 main-content">
         {% block content %}{% endblock %}
