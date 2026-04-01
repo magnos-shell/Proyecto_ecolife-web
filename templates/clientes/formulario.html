@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow border-0">
+                <div class="card-header bg-success text-white py-3">
+                    <h4 class="mb-0 text-center">👤 Registrar Nuevo Cliente</h4>
+                </div>
+                <div class="card-body p-4">
+                    <form action="{{ url_for('nuevo_cliente') }}" method="POST">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Nombre Completo</label>
+                            <input type="text" name="nombre" class="form-control" placeholder="Ej. Juan Pérez" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Cédula / Email</label>
+                            <input type="text" name="email" class="form-control" placeholder="0123456789 o correo@ejemplo.com" required>
+                            <div class="form-text">Este campo se almacenará en la columna 'email' de tu base de datos.</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Teléfono</label>
+                            <input type="text" name="telefono" class="form-control" placeholder="0987654321">
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">💾 Guardar Cliente</button>
+                            <a href="{{ url_for('ver_carrito') }}" class="btn btn-outline-secondary">🛒 Volver al Carrito</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

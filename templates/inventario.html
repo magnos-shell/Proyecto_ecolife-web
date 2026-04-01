@@ -5,6 +5,12 @@
         <h2>📦 Inventario de EcoLife</h2>
         
         <div>
+            <a href="{{ url_for('ver_carrito') }}" class="btn btn-outline-dark me-2">
+                🛒 Ver Carrito 
+                {% if session['carrito'] %}
+                    <span class="badge bg-danger">{{ session['carrito']|length }}</span>
+                {% endif %}
+            </a>
             <a href="{{ url_for('generar_pdf') }}" class="btn btn-danger me-2">📄 Descargar PDF</a>
             <a href="{{ url_for('nuevo_producto') }}" class="btn btn-success">+ Añadir Producto</a>
         </div>
@@ -34,6 +40,16 @@
                     </td>
                     <td>${{ "%.2f"|format(producto.precio) }}</td>
                     <td>
+                        {% if producto.cantidad > 0 %}
+                        <a href="{{ url_for('agregar_al_carrito', id=producto.id) }}" class="btn btn-sm btn-success me-2">
+                            🛒 Añadir
+                        </a>
+                        {% else %}
+                        <button class="btn btn-sm btn-secondary me-2" disabled title="Sin stock">
+                            🚫 Agotado
+                        </button>
+                        {% endif %}
+
                         <a href="{{ url_for('editar_producto', id=producto.id) }}" class="btn btn-sm btn-outline-primary me-2">✏️ Editar</a>
                         <a href="{{ url_for('eliminar_producto', id=producto.id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar este producto? Esta acción no se puede deshacer.');">🗑️ Eliminar</a>
                     </td>
